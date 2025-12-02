@@ -8,7 +8,6 @@ export const authMiddleware = async (req, res, next) => {
       return res.json({ success: false, message: "token doesn't exist" });
     }
     const decoded = jwt.verify(token, process.env.SECRET);
-    console.log("VERIFY SECRET:", process.env.SECRET);
 
 
     const user = await User.findById(decoded.userId).select("-password");

@@ -7,6 +7,8 @@ import { io, userSocketMap } from "../server.js";
 //get all the users except logged in user
 export const getUserForSidebar = async (req, res) => {
   try {
+
+    // console.log('api called')
     const userId = req.user._id;
 
     const filteredUsers = await User.find({ _id: { $ne: userId } }).select(
@@ -30,6 +32,7 @@ export const getUserForSidebar = async (req, res) => {
     });
 
     await Promise.all(promises);
+    // console.log(filteredUsers)
     res.json({ success: true, users: filteredUsers, unseenMessages });
   } catch (error) {
     console.log(error);
