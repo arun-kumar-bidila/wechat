@@ -8,12 +8,12 @@ export const signUp = async (req, res) => {
     const { email, password, fullName, bio } = req.body;
 
     if (!email || !password || !fullName || !bio) {
-      return res.json({ success: false, message: "Cred missing" });
+      return res.status(400).json({ success: false, message: "Cred missing" });
     }
     const user = await User.findOne({ email });
 
     if (user) {
-      return res.json({ success: false, message: "Acc exists" });
+      return res.status(400).json({ success: false, message: "Acc exists" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -29,7 +29,7 @@ export const signUp = async (req, res) => {
     const token = createToken(newUser._id);
     
 
-    res.json({
+    res.status(201).json({
       success: true,
       message: "Acc created",
       userData: newUser,
@@ -37,7 +37,7 @@ export const signUp = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -47,18 +47,18 @@ export const login = async (req, res) => {
     const userData = await User.findOne({ email });
 
     if (!userData) {
-      return res.json({ success: false, message: "Acc doesn't exist" });
+      return res.status(400).json({ success: false, message: "Acc doesn't exist" });
     }
 
     const isMatch = await bcrypt.compare(password, userData.password);
 
     if (!isMatch) {
-      return res.json({ success: false, message: "password doesn't match" });
+      return res.status(400).json({ success: false, message: "password doesn't match" });
     }
 
     const token = createToken(userData._id);
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: "Login successfull",
       token,
@@ -66,12 +66,12 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const checkAuth = (req, res) => {
-  res.json({ success: true, user: req.user });
+  res.status(200).json({ success: true, user: req.user });
 };
 
 export const updateProfile = async (req, res) => {
