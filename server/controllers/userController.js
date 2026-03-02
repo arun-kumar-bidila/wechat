@@ -98,13 +98,13 @@ export const updateProfile = async (req, res) => {
 
      
     }
-     res.json({
+    return  res.json({
         success: true,
         message: "user updated successfully",
         user: updatedUser,
       });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message });
+    return res.json({ success: false, message: error.message });
   }
 };
