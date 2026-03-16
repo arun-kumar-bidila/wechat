@@ -17,22 +17,35 @@ export const io = new Server(server, { cors: { origin: "*" } });
 //Store Online Users
 export const userSocketMap = {};
 
-//socket.io connection handler
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
-  console.log("User connected", userId);
+  console.log(userId);
 
   if (userId) {
-    userSocketMap[userId] = socket.id;
+    if (!userSocketMap[userId]) {
+      userSocketMap[userId] = [];
+    }
+    userSocketMap[userId].push(socket.id);
+    console.log("User Connected:" + userSocketMap[userId]);
+    console.log(userSocketMap);
   }
 
-  //emit online users to all connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
-    console.log("User disconnected", userId);
-    delete userSocketMap[userId];
-    console.log(userSocketMap);
+    if (userId && userSocketMap[userId]) {
+      userSocketMap[userId] = userSocketMap[userId].filter(
+        (id) => id !== socket.id,
+      );
+
+      if (userSocketMap[userId].length === 0) {
+        console.log("User Disconnected:" + userSocketMap[userId]);
+        delete userSocketMap[userId];
+        
+        console.log(userSocketMap);
+      }
+    }
+
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
