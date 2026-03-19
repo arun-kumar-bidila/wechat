@@ -3,16 +3,18 @@ import User from "../models/userModel.js";
 import cloudinary from "../lib/cloudinary.js";
 
 import { io, userSocketMap } from "../server.js";
+import lastMessage from "../models/lastMessageModel.js";
 
 //get all the users except logged in user
 export const getUserForSidebar = async (req, res) => {
   try {
-
     // console.log('api called')
     const userId = req.user._id;
+    console.log("userId:", userId);
+    console.log("type:", typeof userId);
 
     const filteredUsers = await User.find({ _id: { $ne: userId } }).select(
-      "-password"
+      "-password",
     );
 
     //count the number of messages not seen
@@ -33,14 +35,22 @@ export const getUserForSidebar = async (req, res) => {
 
     await Promise.all(promises);
     // console.log(filteredUsers)
-    res.json({ success: true, users: filteredUsers, unseenMessages });
+
+    //retrieving last messages between the users
+    const lastMessages = await lastMessage.find({
+      $or: [{ senderId: userId }, { receiverId: userId }],
+    });
+    res.json({
+      success: true,
+      users: filteredUsers,
+      unseenMessages,
+      lastMessages,
+    });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
-
-
 
 //get all messages for selecteduser
 
@@ -64,7 +74,7 @@ export const getMessages = async (req, res) => {
 
     await Message.updateMany(
       { senderId: selectedUserId, receiverId: myId },
-      { seen: true }
+      { seen: true },
     );
 
     res.json({ success: true, messages });
@@ -107,6 +117,25 @@ export const sendMessage = async (req, res) => {
       text,
       image: imageUrl,
     });
+
+    //Storing last message between users
+    const newlastMessage = await lastMessage.findOneAndUpdate(
+      {
+        $or: [
+          { senderId, receiverId },
+          { senderId: receiverId, receiverId: senderId },
+        ],
+      },
+      {
+        senderId,
+        receiverId,
+        lastMessage: text || "image",
+      },
+      {
+        new: true,
+        upsert: true,
+      },
+    );
 
     //emit the new message to the receiver socket
     const receiverSocketId = userSocketMap[receiverId];
